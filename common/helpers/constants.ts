@@ -98,6 +98,10 @@ export const CONTACTS_FIELDS = [
       { name: 'Have Purchased', value: 'havePurchased' },
       { name: 'Have Not Purchased', value: 'haveNotPurchased' },
       { name: 'Average Amount Spent', value: 'averageAmount Spent' },
+      /* The 'value' here contains an unexpected whitespace. 
+        It is important to investigate and correct this to avoid potential issues
+       when accessing or mapping this field in the code. 
+       */
       { name: 'Amount Spent per Order', value: 'amountSpentPerOrder' },
       { name: 'Total Amount Spent', value: 'totalAmountSpent' },
       { name: 'Fulfillment', value: 'fulfillment' },
@@ -171,7 +175,13 @@ export const CONTACTS_HEADERS = [
   { id: 3, header: 'Email', accessor: 'email' },
   { id: 4, header: 'Mobile', accessor: 'mobile' },
   { id: 5, header: 'Address', accessor: 'address' },
-  // { id: 6, header: 'Status', accessor: 'status' },
+  // { id: 6, header: 'Status', accessor: 'status' }, 
+  /* The 'Status' column is currently commented out. 
+    It’s unclear why this column has been excluded from the active headers, 
+    so an explanation should be provided to clarify the reasoning behind this decision. 
+    This will help other developers (or your future self) understand whether this omission was intentional 
+    and if it needs to be revisited later.
+  */
   { id: 7, header: 'Date Added', accessor: 'dateAdded' },
 ];
 
