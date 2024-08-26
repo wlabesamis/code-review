@@ -296,6 +296,16 @@ const useViewModel = () => {
     setCheckedItems([]);
   };
 
+
+  /**
+   *
+   * Note:
+   *  
+   * if the handleBulkActionsPress has only console.log at it will be use for debugging
+   * ensure to remove it or use other library that can be toggle of in production environments
+   * execessive logging can impact performance 
+   * 
+   */
   const handleBulkActionsPress = (action: string) => {
     console.log(action);
     // if (action === 'delete') {
@@ -305,6 +315,16 @@ const useViewModel = () => {
     // }
   };
 
+  /**
+   * 
+   * Note:
+   * 
+   * Each block of code in handleFilterSelectChange for different filter types (campaign-status, schedule, category) is quite similar. 
+   * To make the code more maintainable and reduce repetition, consider refactoring it.
+   * 
+   * - Added `_.uniq` to the `value` array to prevent duplicate "all" values.
+   * 
+   */
   const handleFilterSelectChange = (id: number) => {
     const isFilterSelected = _.find(selectedFilters, (filter) => filter.id === id);
 
@@ -313,61 +333,77 @@ const useViewModel = () => {
       setSelectedFilters(removeItem);
     } else {
       const filterLabel = _.find(CAMPAIGNS_FILTERS, (filter) => filter.id === id);
-
-      if (filterLabel?.value === 'campaign-status') {
-        const options = [
-          { id: 1, label: 'Show All', value: 'all' },
-          { id: 2, label: 'Ongoing', value: 'ongoing' },
-          { id: 3, label: 'Upcoming', value: 'upcoming' },
-          { id: 4, label: 'Completed', value: 'completed' },
-          { id: 5, label: 'Draft', value: 'draft' },
-        ];
-
-        const selected = {
-          id: filterLabel.id,
-          label: 'Status',
-          type: 'multi-select',
-          options,
-          value: ['all', ..._.map(options, (option) => option.value)],
+  
+      if (filterLabel) {
+        const filterOptions = {
+          'campaign-status': {
+            options: [
+              { id: 1, label: 'Show All', value: 'all' },
+              { id: 2, label: 'Ongoing', value: 'ongoing' },
+              { id: 3, label: 'Upcoming', value: 'upcoming' },
+              { id: 4, label: 'Completed', value: 'completed' },
+              { id: 5, label: 'Draft', value: 'draft' },
+            ],
+            label: 'Status'
+          },
+          'schedule': {
+            options: [
+              { id: 1, label: 'Show All', value: 'all' },
+              { id: 2, label: 'Now', value: 'now' },
+              { id: 3, label: 'Later', value: 'later' },
+              { id: 4, label: 'Recurring', value: 'recurring' },
+            ],
+            label: 'Schedule'
+          },
+          'category': {
+            options: [
+              { id: 1, label: 'Show All', value: 'all' },
+              { id: 2, label: 'Transaction', value: 'transaction' },
+              { id: 3, label: 'Advisories', value: 'advisories' },
+              { id: 4, label: 'Promos', value: 'promos' },
+            ],
+            label: 'Category'
+          }
         };
-
-        setSelectedFilters([...selectedFilters, selected]);
-      } else if (filterLabel?.value === 'schedule') {
-        const options = [
-          { id: 1, label: 'Show All', value: 'all' },
-          { id: 2, label: 'Now', value: 'now' },
-          { id: 3, label: 'Later', value: 'later' },
-          { id: 4, label: 'Recurring', value: 'recurring' },
-        ];
-
-        const selected = {
-          id: filterLabel.id,
-          label: 'Schedule',
-          type: 'multi-select',
-          options,
-          value: ['all', ..._.map(options, (option) => option.value)],
-        };
-
-        setSelectedFilters([...selectedFilters, selected]);
-      } else if (filterLabel?.value === 'category') {
-        const options = [
-          { id: 1, label: 'Show All', value: 'all' },
-          { id: 2, label: 'Transaction', value: 'transaction' },
-          { id: 3, label: 'Advisories', value: 'advisories' },
-          { id: 4, label: 'Promos', value: 'promos' },
-        ];
-
-        const selected = {
-          id: filterLabel.id,
-          label: 'Category',
-          type: 'multi-select',
-          options,
-          value: ['all', ..._.map(options, (option) => option.value)],
-        };
-
-        setSelectedFilters([...selectedFilters, selected]);
+  
+        const optionsConfig = filterOptions[filterLabel.value];
+  
+        if (optionsConfig) {
+          const { options, label } = optionsConfig;
+          const selected = {
+            id: filterLabel.id,
+            label,
+            type: 'multi-select',
+            options,
+            value: _.uniq(['all', ..._.map(options, (option) => option.value)]),
+          };
+  
+          setSelectedFilters([...selectedFilters, selected]);
+        }
       }
     }
+  };
+
+  /**
+   * 
+   * The refactored code introduces the updateFilterValue function, 
+   * which significantly reduces redundancy by abstracting the repeated logic of updating the selectedFilters array. 
+   * This enhances maintainability and readability. The updateFilterValue function is reusable for future extensions, 
+   * should more filter types be added.
+   * 
+   * 
+   */
+
+  const updateFilterValue = (id, updateFn) => {
+    const updatedFilters = _.map(selectedFilters, (filter) => {
+      if (filter.id === id) {
+        return { ...filter, ...updateFn(filter) };
+      } else {
+        return filter;
+      }
+    });
+    
+    setSelectedFilters(updatedFilters);
   };
 
   const handleFilterValueChange = (filter: {
@@ -380,88 +416,29 @@ const useViewModel = () => {
     const { id, type, value } = filter;
 
     if (type === 'dropdown') {
-      const updateValue = _.map(selectedFilters, (filter) => {
-        if (filter.id === id) {
-          return { ...filter, value };
-        } else {
-          return filter;
-        }
-      });
-
-      setSelectedFilters(updateValue);
+      updateFilterValue(id, () => ({ value }));
     } else if (type === 'date-range') {
       const newValue = {
         start: moment(value[0].startDate).format('YYYY-MM-DD'),
         end: moment(value[0].endDate).format('YYYY-MM-DD'),
       };
 
-      const updateValue = _.map(selectedFilters, (filter) => {
-        if (filter.id === id) {
-          return { ...filter, value: newValue };
-        } else {
-          return filter;
-        }
-      });
-
-      setSelectedFilters(updateValue);
+      updateFilterValue(id, () => ({ value: newValue }));
     } else if (type === 'multi-select') {
       const filter = _.find(selectedFilters, (filter) => filter.id === id);
 
       if (!filter?.value.includes('all') && value.includes('all')) {
-        // SELECT ALL
-        const updateValue = _.map(selectedFilters, (filter) => {
-          if (filter.id === id) {
-            return { ...filter, value: _.map(filter?.options, (option) => option.value) };
-          } else {
-            return filter;
-          }
-        });
-
-        setSelectedFilters(updateValue);
+        updateFilterValue(id, () => ({ value: _.map(filter?.options, (option) => option.value) }));
       } else if (_.size(value) === _.size(filter?.options) - 1) {
         if (!value.includes('all') && !filter?.value.includes('all')) {
-          // AUTO SELECT ALL IF ALL OTHER OPTIONS IS SELECTED
-          const updateValue = _.map(selectedFilters, (filter) => {
-            if (filter.id === id) {
-              return { ...filter, value: ['all', ...value] };
-            } else {
-              return filter;
-            }
-          });
-
-          setSelectedFilters(updateValue);
+          updateFilterValue(id, () => ({ value: ['all', ...value] }));
         } else if (!value.includes('all') && filter?.value.includes('all')) {
-          // UNSELECT ALL
-          const updateValue = _.map(selectedFilters, (filter) => {
-            if (filter.id === id) {
-              return { ...filter, value: [] };
-            } else {
-              return filter;
-            }
-          });
-
-          setSelectedFilters(updateValue);
+          updateFilterValue(id, () => ({ value: [] }));
         } else {
-          const updateValue = _.map(selectedFilters, (filter) => {
-            if (filter.id === id) {
-              return { ...filter, value: _.remove(value, (option) => option !== 'all') };
-            } else {
-              return filter;
-            }
-          });
-
-          setSelectedFilters(updateValue);
+          updateFilterValue(id, () => ({ value: _.remove(value, (option) => option !== 'all') }));
         }
       } else {
-        const updateValue = _.map(selectedFilters, (filter) => {
-          if (filter.id === id) {
-            return { ...filter, value: _.remove(value, (option) => option !== 'all') };
-          } else {
-            return filter;
-          }
-        });
-
-        setSelectedFilters(updateValue);
+        updateFilterValue(id, () => ({ value: _.remove(value, (option) => option !== 'all') }));
       }
     }
   };
@@ -493,25 +470,25 @@ const useViewModel = () => {
     }
   };
 
+  /**
+   * 
+   * statusActions object maps updateStatusMode values to the corresponding functions (deactivateCampaign and activateCampaign). 
+   * This allows you to select the appropriate function dynamically, reducing code repetition.
+   * 
+   */
   // Handle Activate/Deactivate Campaign
   const handleUpdateStatus = async () => {
-    if (updateStatusMode === 'deactivate') {
+    const statusActions = {
+      deactivate: deactivateCampaign,
+      activate: activateCampaign,
+    };
+  
+    const selectedAction = statusActions[updateStatusMode];
+  
+    if (selectedAction) {
       try {
-        const deactivateCampaignRes = await deactivateCampaign.mutateAsync(currentCampaignId);
-        if (deactivateCampaignRes?.data?.status === 200) {
-          setShowUpdateStatusSuccessDialog(true);
-          refetch();
-        }
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setShowUpdateStatusDialog(false);
-      }
-    }
-    if (updateStatusMode === 'activate') {
-      try {
-        const activateCampaignRes = await activateCampaign.mutateAsync(currentCampaignId);
-        if (activateCampaignRes?.data?.status === 200) {
+        const response = await selectedAction.mutateAsync(currentCampaignId);
+        if (response?.data?.status === 200) {
           setShowUpdateStatusSuccessDialog(true);
           refetch();
         }

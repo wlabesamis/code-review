@@ -5,6 +5,14 @@ import moment from 'moment';
 
 interface ITodayAndLater {
   dataOut: any;
+  /**
+   * 
+   * Avoid Using any: Using any can defeat the purpose of TypeScript's type checking. 
+   * Instead, try to define a more specific type if possible. Based on the code the dataOut is a function,
+   * 
+   * dataOut: (formik?: { [key: string]: unknown }) => void;
+   * 
+   */
   dataIn?: {
     /** Value for sendDate field */
     date?: string;
@@ -12,6 +20,17 @@ interface ITodayAndLater {
     time?: string;
     /** Campaign Schedule (now/later/recurring) */
     schedule?: string | { [key: string]: unknown };
+
+    /**
+     * 
+     * schedule Property: In the TodayAndLater component, 
+     * dataIn?.schedule is checked against specific string values ('now'). 
+     * The code doesn't use schedule as an object with dynamic keys and values.
+     * we can use line code below
+     * 
+     * schedule?: 'now' | 'later' | 'recurring'
+     *  
+     */
   };
   disabled?: boolean;
 }
